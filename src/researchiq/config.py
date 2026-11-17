@@ -61,11 +61,18 @@ class Settings(BaseSettings):
     compare_k: int = 15
     synthesis_k: int = 10
     synthesis_per_paper: int = 2
+    reranker_backend: str = "onnx"    # "onnx" (MiniLM int8, fast) or "torch" (bge-reranker-base, slow)
+    reranker_onnx_repo: str = "Xenova/ms-marco-MiniLM-L-6-v2"
+    reranker_onnx_file: str = "onnx/model_quantized.onnx"
+    reranker_onnx_model: str = "Xenova/ms-marco-MiniLM-L-6-v2-int8"
+    rerank_max_candidates: int = 15   # only the best N RRF results are scored by the cross-encoder
 
     # Generation
     context_token_budget: int = 6000  # legacy cap; per-route budgets below take precedence
-    # Evidence gate: best rerank score (bge-reranker logit) below this -> no LLM call. Tune on the eval set.
-    evidence_threshold: float = -4.0
+    # Evidence gate: best rerank score below this -> no LLM call. Calibrated for the ONNX MiniLM logits
+    # (answerable queries scored >= 3.5, an unanswerable one -5.2 on 10 test queries). Re-tune on the eval
+    # set; for the torch/bge backend (scores 0..1) use a value near 0.1.
+    evidence_threshold: float = -2.0
     # Per-route generation budgets (HLD 4.2): (max context chunks, max output tokens)
     gen_request_cap: int = 4700       # whole request (system + question + context + output) stays under this
     gen_system_tokens: int = 450

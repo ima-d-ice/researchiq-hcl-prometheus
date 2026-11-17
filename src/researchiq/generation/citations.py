@@ -82,8 +82,9 @@ def missing_entities(claim: str, source: str) -> list[str]:
 
 def _semantic(pairs: list[tuple[str, str]]) -> list[float]:
     """Cross-encoder relevance (claim, chunk). Reuses the reranker already loaded for retrieval."""
-    from researchiq.retrieval.rerank import _model
-    return [float(s) for s in _model().predict(pairs)]
+    from researchiq.retrieval.rerank import score_pairs
+    # score_pairs takes one question; claims differ per pair, so score each (claim, chunk) pair separately
+    return [score_pairs(claim, [chunk])[0] for claim, chunk in pairs]
 
 
 def _mentioned_papers(claim: str, papers: dict[str, str]) -> set[str]:
@@ -183,7 +184,7 @@ def check_citations(ans: LLMAnswer, sources: dict[str, ScoredChunk],
     # 2. coverage: answer sentences and answer tags vs claim tags
     if not ans.insufficient_evidence:
         for s in _SENT.split(rep.answer):
-            if len(s.split()) >= 5 and not _TAG.search(s):
+            if len(s.split()) >= 5 and not _TAGS_ANY.search(s):
                 w.append(f"Uncited sentence: {s[:80]}")
     claim_tags = {t for c in checks for t in c.source_ids}
     answer_tags = set(_TAG.findall(rep.answer)) | set(re.findall(r"S\d+", " ".join(_TAGS_ANY.findall(rep.answer))))
