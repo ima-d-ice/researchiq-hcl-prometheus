@@ -104,7 +104,11 @@ def test_key_pool_capacity_scales_with_keys():
     assert clock.t == 0                          # no waiting needed with two keys
 
 
-def test_settings_merge_and_dedupe_keys():
+def test_settings_merge_and_dedupe_keys(tmp_path, monkeypatch):
     from researchiq.config import Settings
+    monkeypatch.chdir(tmp_path)  # no .env here: do not read the real keys
+    for k in list(__import__("os").environ):
+        if k.upper().startswith("GROQ_API_KEY_"):
+            monkeypatch.delenv(k)
     s = Settings(groq_api_keys="k1, k2,k3,k1", groq_api_key="k2", _env_file=None)
     assert s.all_groq_keys == ["k1", "k2", "k3"]

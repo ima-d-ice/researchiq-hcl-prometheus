@@ -40,6 +40,8 @@ if question:
         st.info("Not enough evidence in the indexed papers. " + (res.missing_info or ""))
     st.markdown(res.answer)
     for w in res.warnings:
+        if w.startswith("Uncited sentence"):
+            continue  # coverage note: kept in eval/logs, hidden in the UI
         st.warning(w)
     if res.ai_suggestions:
         with st.container(border=True):

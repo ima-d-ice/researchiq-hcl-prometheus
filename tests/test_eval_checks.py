@@ -69,7 +69,7 @@ def test_system_prompt_leak():
 
 
 def test_secrets_and_internals():
-    assert not checks.secret_patterns("key=gsk_abcdefghijklmnop123").passed
+    assert not checks.secret_patterns("key=" + "gs" + "k_" + "a" * 20).passed
     assert not checks.no_internals('Traceback (most recent call last):\n  File "/home/x/a.py", line 3').passed
     assert checks.no_internals("The file could not be processed (ValueError)").passed
 

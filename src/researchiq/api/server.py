@@ -38,9 +38,10 @@ def _warm() -> None:
     """Load the embedding models and reranker before the first question, so it isn't slow."""
     try:
         from researchiq.ingestion.embed import embed_dense, embed_sparse
-        from researchiq.retrieval.rerank import _model
+        from researchiq.retrieval.rerank import preload, score_pairs
         embed_dense(["warm up"]), embed_sparse(["warm up"])
-        _model().predict([("warm up", "warm up")])
+        preload()
+        score_pairs("warm up", ["warm up"])
         _state["ready"] = True
     except Exception as e:  # keep serving; questions will load models lazily
         log.exception("warm-up failed")

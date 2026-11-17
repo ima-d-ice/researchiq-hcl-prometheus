@@ -34,7 +34,7 @@ FULL = "dense + BM25 (RRF) + rerank"
 # ---------------------------------------------------------------- gold set
 def load_gold(path: Path = HERE / "gold_set.jsonl") -> tuple[list[dict], int]:
     rows, placeholders = [], 0
-    for i, line in enumerate(path.read_text().splitlines(), start=1):
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
         row = checks.validate_row(json.loads(line), i)
@@ -48,6 +48,7 @@ def load_gold(path: Path = HERE / "gold_set.jsonl") -> tuple[list[dict], int]:
 # ---------------------------------------------------------------- retrieval (local, 0 tokens)
 def eval_retrieval(gold: list[dict]) -> dict:
     from researchiq.retrieval.pipeline import retrieve
+    from researchiq.retrieval.rewrite import rewrite
     from researchiq.retrieval.router import route
 
     scored = [g for g in gold if g["expected_sources"]]
@@ -64,8 +65,9 @@ def eval_retrieval(gold: list[dict]) -> dict:
         ablation[name] = {"Recall@5": _avg(r5), "MRR": _avg(mrr), "Hit@5": _avg(hit)}
 
     routed = [g for g in gold if g.get("route")]
-    misrouted = [{"id": g["id"], "expected": g["route"], "got": route(g["question"]).value}
-                 for g in routed if route(g["question"]).value != g["route"]]
+    got = {g["id"]: route(rewrite(g["question"])).value for g in routed}  # shipped routing (plan-based)
+    misrouted = [{"id": g["id"], "expected": g["route"], "got": got[g["id"]]}
+                 for g in routed if got[g["id"]] != g["route"]]
     return {"n": len(scored), "ablation": ablation,
             "recall_by_type": {k: _avg(v) for k, v in per_type.items()},
             "routing": {"n": len(routed), "accuracy": _avg([1.0] * (len(routed) - len(misrouted))
@@ -214,7 +216,7 @@ def write_report(meta: dict, ret: dict | None, ans: list[dict] | None, sec: list
               "**Fix:** _fill in by hand_", ""]
 
     out = HERE / "report.md"
-    out.write_text("\n".join(L))
+    out.write_text("\n".join(L), encoding="utf-8")
     return out
 
 
@@ -255,7 +257,7 @@ def main() -> None:
     (results / f"{datetime.now():%Y%m%d-%H%M%S}.json").write_text(json.dumps(
         {"meta": meta, "retrieval": ret, "answers": ans,
          "security": [{**r.__dict__, "findings": [f.__dict__ for f in r.findings]} for r in sec or []]},
-        indent=2, default=str))
+        indent=2, default=str), encoding="utf-8")
     print(f"Wrote {path} in {time.perf_counter() - start:.0f}s")
 
 

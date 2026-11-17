@@ -57,6 +57,7 @@ def _chunks_for(a: Attack):
 
 
 def run_context(attacks=ATTACKS) -> list[Result]:
+    from researchiq.retrieval.rewrite import rewrite
     from researchiq.retrieval.router import route
     from pipeline_trace import Trace, answer_from_chunks
 
@@ -64,7 +65,7 @@ def run_context(attacks=ATTACKS) -> list[Result]:
     for a in attacks:
         t = Trace(a.question)
         try:
-            answer_from_chunks(a.question, route(a.question), _chunks_for(a), t)
+            answer_from_chunks(a.question, route(rewrite(a.question)), _chunks_for(a), t)
         except Exception as e:
             t.error = f"{type(e).__name__}: {e}"
         f = _injection_findings(a, t)
@@ -142,7 +143,7 @@ def run_uploads() -> list[Result]:
 
 # ---------------------------------------------------------------- secrets hygiene (local, 0 tokens)
 def run_secrets() -> list[Result]:
-    gitignore = (REPO / ".gitignore").read_text() if (REPO / ".gitignore").exists() else ""
+    gitignore = (REPO / ".gitignore").read_text(encoding="utf-8") if (REPO / ".gitignore").exists() else ""
     f = [checks.Finding(".env is gitignored", ".env" in gitignore.split())]
     try:
         tracked = subprocess.run(["git", "ls-files"], cwd=REPO, capture_output=True, text=True,
@@ -154,7 +155,7 @@ def run_secrets() -> list[Result]:
     for name in tracked:
         p = REPO / name
         if p.is_file() and p.suffix in {".py", ".md", ".toml", ".json", ".jsonl", ".txt", ".example", ".yml", ".yaml", ".cfg"}:
-            if not checks.secret_patterns(p.read_text(errors="ignore")).passed:
+            if not checks.secret_patterns(p.read_text(encoding="utf-8", errors="ignore")).passed:
                 leaked.append(name)
     f.append(checks.Finding("no API keys in tracked files", not leaked, ", ".join(leaked)))
     papers = [n for n in tracked if n.startswith("data/") and n.lower().endswith(".pdf")]
