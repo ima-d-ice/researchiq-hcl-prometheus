@@ -5,22 +5,24 @@ from pathlib import Path
 import streamlit as st
 
 from researchiq.generation.pipeline import answer
-from researchiq.ingestion.pipeline import ingest_pdf
+from researchiq.ingestion.pipeline import ingest_file
+from researchiq.ingestion.upload import ALLOWED_EXTENSIONS
 
 st.set_page_config(page_title="ResearchIQ", layout="wide")
 st.title("ResearchIQ")
 
 with st.sidebar:
     st.header("Add papers")
-    files = st.file_uploader("PDFs", type="pdf", accept_multiple_files=True)
+    files = st.file_uploader("Documents", type=[e.lstrip(".") for e in ALLOWED_EXTENSIONS],
+                             accept_multiple_files=True)
     if files and st.button("Ingest"):
         for f in files:
             with st.spinner(f"Ingesting {f.name}..."):
                 tmp = Path(tempfile.mkdtemp()) / f.name
                 tmp.write_bytes(f.getvalue())
                 try:
-                    n = ingest_pdf(tmp)
-                    st.success(f"{f.name}: {n} chunks")
+                    r = ingest_file(tmp)
+                    st.success(f"{f.name}: {r.n_chunks} chunks")
                 except Exception as e:  # surface any ingestion error in the UI
                     st.error(f"{f.name}: {e}")
 
