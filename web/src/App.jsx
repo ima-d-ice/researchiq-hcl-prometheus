@@ -128,7 +128,6 @@ export default function App() {
         onAsk={submit}
         pending={pending}
         askRef={askRef}
-        onFiles={addFiles}
       />
       <Sources entry={active} hoverTag={hoverTag} setHoverTag={setHoverTag} />
     </div>
@@ -230,12 +229,12 @@ function Rail({ papers, papersError, scope, setScope, uploads, onFiles, clearUpl
   );
 }
 
-function DropZone({ onFiles, large = false }) {
+function DropZone({ onFiles }) {
   const [over, setOver] = useState(false);
   const input = useRef(null);
   return (
     <div
-      className={`drop ${over ? "is-over" : ""} ${large ? "drop-large" : ""}`}
+      className={`drop ${over ? "is-over" : ""}`}
       onDragOver={(e) => {
         e.preventDefault();
         setOver(true);
@@ -267,7 +266,7 @@ function DropZone({ onFiles, large = false }) {
 }
 
 /* ------------------------------------------------------------------ the wall */
-function Wall({ thread, active, setActiveId, hoverTag, setHoverTag, papers, scope, titleOf, clearScope, onAsk, pending, askRef, onFiles }) {
+function Wall({ thread, active, setActiveId, hoverTag, setHoverTag, papers, scope, titleOf, clearScope, onAsk, pending, askRef }) {
   const scroller = useRef(null);
   const last = thread.at(-1);
 
@@ -280,7 +279,7 @@ function Wall({ thread, active, setActiveId, hoverTag, setHoverTag, papers, scop
     <main className="wall">
       <div className="wall-scroll" ref={scroller}>
         {thread.length === 0 ? (
-          <Welcome papers={papers} onFiles={onFiles} />
+          <Welcome papers={papers} />
         ) : (
           thread.map((e) => (
             <Entry
@@ -301,13 +300,12 @@ function Wall({ thread, active, setActiveId, hoverTag, setHoverTag, papers, scop
   );
 }
 
-function Welcome({ papers, onFiles }) {
+function Welcome({ papers }) {
   if (papers && papers.length === 0) {
     return (
       <section className="welcome">
         <h1>Add papers to begin.</h1>
-        <p>ResearchIQ reads your papers, including their figures and tables, and answers questions with a citation to the page for every claim.</p>
-        <DropZone onFiles={onFiles} large />
+        <p>Use Add papers in the collection on the left. ResearchIQ reads your papers, including their figures and tables, and answers questions with a citation to the page for every claim.</p>
       </section>
     );
   }
