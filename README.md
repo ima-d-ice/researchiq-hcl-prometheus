@@ -75,3 +75,32 @@ The limiter is per process: do not run ingestion and eval at the same time on on
 Put all keys in `.env` (gitignored), comma-separated: `GROQ_API_KEYS=gsk_a...,gsk_b...,gsk_c...`.
 Each key has its own 8k TPM limiter; calls are spread round-robin, and a key that returns 429
 is put on cooldown (using `retry-after`) while the call moves to the next key.
+
+## Evaluation (lane D)
+
+```bash
+python eval/run_eval.py --no-llm            # retrieval + local security checks, 0 Groq tokens
+python eval/run_eval.py                     # everything; writes eval/report.md
+python eval/run_eval.py --only answers --limit 5 --judge-limit 3
+```
+
+| Part | What it reports | Cost |
+|---|---|---|
+| Retrieval | Recall@5, MRR, Hit@5 for 4 ablations (dense, +rerank, +BM25/RRF, full); Recall@5 by question type; router accuracy | local |
+| Answers | faithfulness, answer relevancy, context precision, context recall, correctness (one judge call per question); citation accuracy vs expected pages; refusal correctness on unanswerable questions; false refusals; latency | ~4k tokens/question + ~3k/judged |
+| Security | prompt injection (6 attacks, as crafted chunks and as ingested PDFs), direct jailbreak questions, bad uploads, secrets hygiene | ~4k tokens/LLM case |
+
+**Gold set** (`eval/gold_set.jsonl`): rows with `TODO` are skipped. Each row needs `id`, `type`
+(factual / compare / figure / conflict / unanswerable / injection), `question`, `expected_sources`
+(`[{"paper_id", "page", "figure_label"?}]`, empty only for unanswerable), `reference_answer`,
+optional `route` and `must_not_contain`. Aim for 15–20 rows across all types.
+
+**Document-level injection tests** need the synthetic attack PDFs indexed:
+
+```bash
+python eval/attacks/make_docs.py
+python scripts/ingest.py data/eval_attacks --no-vlm
+```
+
+Judge scores are not ground truth; hand-check a few. Fill in the root cause and fix for each
+failure case in the report by hand.
