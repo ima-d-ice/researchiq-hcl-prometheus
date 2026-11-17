@@ -36,9 +36,16 @@ if question:
         st.error(str(e))
         st.stop()
     st.caption(f"Route: {res.route.value}")
+    if res.insufficient_evidence:
+        st.info("Not enough evidence in the indexed papers. " + (res.missing_info or ""))
     st.markdown(res.answer)
     for w in res.warnings:
         st.warning(w)
+    if res.ai_suggestions:
+        with st.container(border=True):
+            st.markdown("**AI-generated suggestions: not findings from the papers**")
+            for s_ in res.ai_suggestions:
+                st.markdown(f"- {s_}")
 
     st.subheader("Evidence")
     cols = st.columns(3)
@@ -47,5 +54,7 @@ if question:
             label = f" · {c.figure_label}" if c.figure_label else ""
             st.markdown(f"**[{c.tag}] {c.paper_title}**  \np.{c.page}{label}")
             st.caption(c.snippet)
-            if not c.supported:
-                st.error("Support not verified")
+            if c.status == "unsupported":
+                st.error("Claim not supported by this source")
+            elif c.status == "weak":
+                st.warning("Weakly supported")

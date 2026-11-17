@@ -63,7 +63,18 @@ class Settings(BaseSettings):
     synthesis_per_paper: int = 2
 
     # Generation
-    context_token_budget: int = 6000
+    context_token_budget: int = 6000  # legacy cap; per-route budgets below take precedence
+    # Evidence gate: best rerank score (bge-reranker logit) below this -> no LLM call. Tune on the eval set.
+    evidence_threshold: float = -4.0
+    # Per-route generation budgets (HLD 4.2): (max context chunks, max output tokens)
+    gen_request_cap: int = 4700       # whole request (system + question + context + output) stays under this
+    gen_system_tokens: int = 450
+    gen_max_tokens_general: int = 800
+    gen_max_tokens_compare: int = 1200
+    gen_chunk_tokens: int = 450       # per-chunk cap inside the prompt
+    # Citation check thresholds (tune on the eval set)
+    cite_overlap_min: float = 0.3     # content-word overlap, claim vs cited chunk(s)
+    cite_semantic_min: float = -2.0   # cross-encoder logit, claim vs cited chunk(s)
 
     # Cache
     cache_dir: Path = Path("data/cache")

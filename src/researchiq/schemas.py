@@ -70,14 +70,16 @@ class ScoredChunk(BaseModel):
 
 class Claim(BaseModel):
     text: str
-    sources: list[str] = Field(description="Source tags like 'S1', 'S3'")
+    source_ids: list[str] = Field(default_factory=list, description="Source tags like 'S1', 'S3'")
 
 
 class LLMAnswer(BaseModel):
     """Structure the LLM must return in JSON mode."""
     answer: str
-    claims: list[Claim]
+    claims: list[Claim] = []
     insufficient_evidence: bool = False
+    missing_info: str | None = None
+    ai_suggestions: list[str] = []    # labelled speculation, never citation-checked
 
 
 class Citation(BaseModel):
@@ -86,7 +88,16 @@ class Citation(BaseModel):
     page: int
     figure_label: str | None = None
     snippet: str
-    supported: bool
+    supported: bool = True            # False when any claim citing it is unsupported
+    status: str = "supported"         # supported | weak | unsupported
+    paper_id: str = ""
+
+
+class ClaimCheck(BaseModel):
+    text: str
+    source_ids: list[str]
+    status: str                       # supported | weak | unsupported
+    reasons: list[str] = []
 
 
 class FinalAnswer(BaseModel):
@@ -94,4 +105,8 @@ class FinalAnswer(BaseModel):
     route: Route
     answer: str
     citations: list[Citation]
+    claims: list[ClaimCheck] = []
     warnings: list[str] = []
+    insufficient_evidence: bool = False
+    missing_info: str | None = None
+    ai_suggestions: list[str] = []
