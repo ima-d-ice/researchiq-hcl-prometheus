@@ -112,6 +112,8 @@ def ingest_file(path: Path, describe: bool = True, max_vlm_calls: int | None = N
         from researchiq.ingestion.index import delete_paper, upsert_chunks
         delete_paper(paper_id)  # replace_doc
         upsert_chunks(chunks)
+        from researchiq.retrieval.rewrite import list_papers
+        list_papers.cache_clear()  # new paper -> refresh the rewrite step's paper list
     except (UploadError, IngestError):
         raise
     except Exception as e:

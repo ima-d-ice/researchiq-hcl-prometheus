@@ -7,6 +7,7 @@ import streamlit as st
 from researchiq.generation.pipeline import answer
 from researchiq.ingestion.pipeline import ingest_file
 from researchiq.ingestion.upload import ALLOWED_EXTENSIONS
+from researchiq.retrieval.guard import InvalidQuestion
 
 st.set_page_config(page_title="ResearchIQ", layout="wide")
 st.title("ResearchIQ")
@@ -28,8 +29,12 @@ with st.sidebar:
 
 question = st.text_input("Ask a question about your papers")
 if question:
-    with st.spinner("Thinking..."):
-        res = answer(question)
+    try:
+        with st.spinner("Thinking..."):
+            res = answer(question)
+    except InvalidQuestion as e:
+        st.error(str(e))
+        st.stop()
     st.caption(f"Route: {res.route.value}")
     st.markdown(res.answer)
     for w in res.warnings:
