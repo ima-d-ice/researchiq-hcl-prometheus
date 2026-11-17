@@ -1,0 +1,3 @@
+{"id": "q01", "question": "TODO: replace with a real question about paper X", "paper_id": "TODO", "expected_pages": [3], "reference_answer": "TODO", "route": "general"}
+{"id": "q02", "question": "TODO: what does Figure N show?", "paper_id": "TODO", "expected_pages": [5], "reference_answer": "TODO", "route": "figure"}
+{"id": "q03", "question": "TODO: how does method A compare to method B?", "paper_id": "TODO", "expected_pages": [4, 7], "reference_answer": "TODO", "route": "compare"}
