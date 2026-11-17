@@ -104,3 +104,15 @@ python scripts/ingest.py data/eval_attacks --no-vlm
 
 Judge scores are not ground truth; hand-check a few. Fill in the root cause and fix for each
 failure case in the report by hand.
+
+## Web UI
+
+FastAPI server (`src/researchiq/api/server.py`) plus a React frontend (`web/`, built with Vite).
+
+```bash
+pip install fastapi "uvicorn[standard]" python-multipart
+cd web && npm install && npm run build && cd ..
+uvicorn researchiq.api.server:app --port 8000      # open http://localhost:8000
+```
+
+For frontend development, run the API on :8000 and `npm run dev` in `web/` (proxies `/api`).
