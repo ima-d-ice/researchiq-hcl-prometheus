@@ -23,6 +23,15 @@ class Chunk(BaseModel):
     page: int
     figure_label: str | None = None   # e.g. "Figure 3", "Table 2"
     image_path: str | None = None
+    # Added by ingestion (all optional so older payloads still load)
+    chunk_index: int = 0
+    section: str = ""
+    caption: str | None = None
+    parser: str = "docling"
+    source_type: str = "pdf"
+    location: str | None = None       # "Slide 4", "Sheet: Results"
+    year: int | None = None
+    source_url: str | None = None
 
 
 class VisualElement(BaseModel):

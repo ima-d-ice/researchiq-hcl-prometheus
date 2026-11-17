@@ -13,6 +13,12 @@ dependencies = [
     "pydantic-settings",
     "tiktoken",
     "streamlit",
+    "pymupdf",
+    "transformers",
+    "pillow",
+    "python-docx",
+    "python-pptx",
+    "openpyxl",
 ]
 
 [project.optional-dependencies]
