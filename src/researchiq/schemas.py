@@ -52,6 +52,17 @@ class Route(str, Enum):
     SYNTHESIS = "synthesis"
 
 
+class QueryPlan(BaseModel):
+    """Output of the query-rewrite step (or a pass-through of the original question)."""
+    original: str
+    rewritten: str                    # standalone question: dense search + rerank
+    keywords: list[str] = []          # exact-match terms, added to the BM25 query only
+    route: Route | None = None        # LLM hint; the router validates it
+    paper_ids: list[str] = []         # papers the question refers to (known ids only)
+    figure_label: str | None = None   # normalised "Figure 3" / "Table 2"
+    rewritten_by_llm: bool = False
+
+
 class ScoredChunk(BaseModel):
     chunk: Chunk
     score: float

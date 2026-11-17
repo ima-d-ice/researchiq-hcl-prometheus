@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     reranker_model: str = "BAAI/bge-reranker-base"
     top_n: int = 6
     max_question_chars: int = 1000
+    query_rewrite: bool = True
+    rewrite_max_tokens: int = 300
+    compare_k: int = 15
+    synthesis_k: int = 10
+    synthesis_per_paper: int = 2
 
     # Generation
     context_token_budget: int = 6000
@@ -79,6 +84,10 @@ class Settings(BaseSettings):
         listed = [k.strip() for k in self.groq_api_keys.replace("\n", ",").split(",")]
         keys = [v for _, v in numbered] + listed + [self.groq_api_key.strip()]
         return list(dict.fromkeys(k for k in keys if k))
+
+    @property
+    def rewrites_cache(self) -> Path:
+        return self.cache_dir / "rewrites.json"
 
     @property
     def figures_cache(self) -> Path:
