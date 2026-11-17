@@ -38,12 +38,46 @@ parse_pdf = parse_file  # backwards-compatible name
 
 
 def extract_title(doc: DoclingDocument, path: Path) -> str:
-    """Docling TITLE item -> file metadata -> file name."""
+    """Docling TITLE item -> largest text at the top of PDF page 1 -> file metadata -> file name."""
     for item in doc.texts:
         if item.label == DocItemLabel.TITLE and item.text.strip():
-            return item.text.strip()[:200]
-    meta = _metadata_title(Path(path))
-    return meta or Path(path).stem
+            return item.text.strip()[:250]
+    path = Path(path)
+    if path.suffix.lower() == ".pdf":
+        title = pdf_font_title(path)
+        if title:
+            return title
+    meta = _metadata_title(path)
+    return meta or path.stem
+
+
+def pdf_font_title(path: Path) -> str:
+    """Paper titles are the largest horizontal text in the top part of page 1."""
+    try:
+        import pymupdf as fitz
+        with fitz.open(path) as d:
+            if d.page_count == 0:
+                return ""
+            page = d[0]
+            limit = page.rect.height * 0.4
+            lines = []  # (font size, y, text)
+            for block in page.get_text("dict").get("blocks", []):
+                for line in block.get("lines", []):
+                    if tuple(round(x) for x in line.get("dir", (1, 0))) != (1, 0):
+                        continue  # skip rotated text such as the arXiv side stamp
+                    spans = [s for s in line.get("spans", []) if s["text"].strip()]
+                    if not spans or line["bbox"][1] > limit:
+                        continue
+                    text = " ".join(s["text"].strip() for s in spans)
+                    lines.append((max(s["size"] for s in spans), line["bbox"][1], text))
+    except Exception:
+        return ""
+    if not lines:
+        return ""
+    top = max(size for size, _, text in lines if len(text) >= 3) if any(len(t) >= 3 for _, _, t in lines) else 0
+    title = " ".join(t for size, _, t in sorted((l for l in lines if l[0] >= top - 0.5), key=lambda l: l[1]))
+    title = " ".join(title.split())
+    return title[:250] if 10 <= len(title) and any(c.isalpha() for c in title) else ""
 
 
 def _metadata_title(path: Path) -> str:
