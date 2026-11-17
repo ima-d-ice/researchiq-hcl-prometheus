@@ -40,10 +40,17 @@ def _interleave(groups: list[list[ScoredChunk]]) -> list[ScoredChunk]:
 
 
 def retrieve(question: str, use_sparse: bool = True, use_rerank: bool = True,
-             use_rewrite: bool = True) -> RetrievalResult:
-    """Flags exist so eval can run ablations (dense-only, no rerank, ...)."""
+             use_rewrite: bool = True, paper_ids: list[str] | None = None) -> RetrievalResult:
+    """Flags exist so eval can run ablations (dense-only, no rerank, ...).
+
+    `paper_ids` scopes the search to papers the user picked (UI library); it overrides the
+    papers the rewrite step inferred from the question.
+    """
     q = check_question(question)
     plan = rewrite(q) if use_rewrite else QueryPlan(original=q, rewritten=q)
+    if paper_ids:
+        known = {pid for pid, _ in list_papers()}
+        plan.paper_ids = [p for p in paper_ids if p in known] or plan.paper_ids
     r = route(plan)
     n = settings.top_n
     args = dict(use_sparse=use_sparse, use_rerank=use_rerank)
